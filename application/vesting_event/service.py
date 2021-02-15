@@ -19,11 +19,11 @@ class VestingEventService:
             raise InvalidPrecisionDigitsException(
                 "precision digits must be between 0 and 6, but was {}".format(command.precision_digits))
 
-        vesting_events = self.assemble_vesting_events(command)
-        equity_awards = self.assemble_equity_awards(vesting_events)
+        vesting_events = self.__assemble_vesting_events(command)
+        equity_awards = self.__assemble_equity_awards(vesting_events)
         self.output.generate_vesting_schedule(equity_awards)
 
-    def assemble_vesting_events(self, command):
+    def __assemble_vesting_events(self, command):
         vesting_events = []
         employees = {}
         for input in command.inputs:
@@ -47,20 +47,25 @@ class VestingEventService:
 
         return vesting_events
 
-    def assemble_equity_awards(self, vesting_events):
-        equity_awards = {}
+    def __assemble_equity_awards(self, vesting_events):
+        equity_awards_dict = {}
         for vesting_event in vesting_events:
-            if vesting_event.equity_award_id not in equity_awards:
-                equity_awards[vesting_event.equity_award_id] = EquityAward(
-                    award_id=vesting_event.equity_award_id,
-                    employee=vesting_event.employee,
-                    vested_shares=Decimal('0'),
-                )
-            equity_award = equity_awards[vesting_event.equity_award_id]
+            equity_award = self.__get_equity_award(vesting_event, equity_awards_dict)
 
             if vesting_event.event_type == VestingEvent.EVENT_TYPE_VEST:
                 equity_award.vest_shares(vesting_event.shares_quantity)
             elif vesting_event.event_type == VestingEvent.EVENT_TYPE_CANCEL:
                 equity_award.cancel_shares(vesting_event.shares_quantity)
 
-        return list(equity_awards.values())
+        return list(equity_awards_dict.values())
+
+    @staticmethod
+    def __get_equity_award(vesting_event, equity_awards_dict):
+        key = "{}_{}".format(vesting_event.equity_award_id, vesting_event.employee.id)
+        if key not in equity_awards_dict:
+            equity_awards_dict[key] = EquityAward(
+                award_id=vesting_event.equity_award_id,
+                employee=vesting_event.employee,
+            )
+
+        return equity_awards_dict[key]
