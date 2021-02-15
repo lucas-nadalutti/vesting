@@ -22,5 +22,5 @@ no need to build and no external dependencies needed)
 
 Assumptions
 
-- Inputs will always include vest events before cancel events for a given employee. The examples meet this premise, and
+- Inputs will always include vest events before cancel events for any given employee. The examples meet this premise, and
 not assuming this would result in a considerably more complex code with little upside in terms of code evaluation
